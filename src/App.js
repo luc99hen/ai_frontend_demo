@@ -14,23 +14,30 @@ function App() {
     "https://gw.alipayobjects.com/zos/rmsportal/JiqGstEfoWAOHiTxclqi.png"
   );
 
-  const switchMode = (e) => {
-    console.log(e.target.value);
+  const [res, setRes] = useState(mockData);
+  const [loading, setLoading] = useState(false);
+
+  const setImage = (url) => {
+    setURL(url);
   };
 
-  const setRes = (url) => {
-    setURL(url);
+  const setPredict = (res) => {
+    setRes(res);
   };
 
   return (
     <div className="app">
       <div className="upload">
-        <FileUpload switchMode={switchMode} setRes={setRes}></FileUpload>
+        <FileUpload
+          setImage={setImage}
+          setRes={setPredict}
+          setLoading={setLoading}
+        ></FileUpload>
       </div>
       <div className="result">
         <ResultCard
-          loading={false}
-          resData={mockData}
+          loading={loading}
+          resData={res}
           imgUrl={imgUrl}
         ></ResultCard>
       </div>

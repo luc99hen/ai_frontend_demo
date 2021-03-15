@@ -1,6 +1,8 @@
 import { Upload, Button, Radio } from 'antd';
 import { UploadOutlined } from '@ant-design/icons';
 import axios from 'axios';
+import { useState } from "react";
+
 
 const fileList = [
   {
@@ -19,19 +21,15 @@ const fileList = [
 
 
 const uploadProps = {
-  action: 'https://run.mocky.io/v3/84ae21d7-c07b-427c-b9ba-7f52d33d6a99',
+  action: 'http://100.64.217.69:5000/upload',
   multiple: false,
   listType: "picture",
   defaultFileList: fileList,
-  data: { a: 1, b: 2 },
   headers: {
     Authorization: '$prefix $token',
   },
   onStart(file) {
     console.log('onStart', file, file.name);
-  },
-  onSuccess(res, file) {
-    console.log('onSuccess', res, file.name);
   },
   onError(err) {
     console.log('onError', err);
@@ -42,7 +40,25 @@ const uploadProps = {
 };
 
 
-export default function FileUpload({switchMode, setRes}){
+
+export default function FileUpload({setImage, setRes, setLoading}){
+
+  const [port, setURL] = useState("5000");
+
+  const switchMode = (e) => {
+    const mode = e.target.value;
+    if(mode === "car"){
+      setURL("5001");
+    }
+    else{
+      setURL("5000");
+    }
+  };
+
+  const onSuccess = (res, file) => {
+    console.log('onSuccess', res, file.name);
+    setRes(res.res);
+  };
 
   const customRequest = ({
     action,
@@ -57,8 +73,9 @@ export default function FileUpload({switchMode, setRes}){
   }) => {
 
     const url = URL.createObjectURL(file);
-    setRes(url);
-    console.log(url);
+    setImage(url);
+
+    setLoading(true);
 
     const formData = new FormData();
     if (data) {
@@ -78,8 +95,12 @@ export default function FileUpload({switchMode, setRes}){
       })
       .then(({ data: response }) => {
         onSuccess(response, file);
+        setLoading(false);
       })
-      .catch(onError);
+      .catch(() => {
+        onError();
+        setLoading(false);
+      });
 
     return {
       abort() {
@@ -94,7 +115,7 @@ export default function FileUpload({switchMode, setRes}){
       <Radio.Button value="people">People</Radio.Button>
     </Radio.Group>
     
-    <Upload {...uploadProps} customRequest={customRequest}>       
+    <Upload {...uploadProps} action={`http://100.64.217.69:${port}/upload`} customRequest={customRequest} onSuccess={onSuccess}>       
         <Button icon={<UploadOutlined />}>Upload</Button>
       </Upload>   
   </div>

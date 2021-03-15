@@ -21,7 +21,6 @@ const fileList = [
 
 
 const uploadProps = {
-  action: 'http://100.64.217.69:5000/upload',
   multiple: false,
   listType: "picture",
   defaultFileList: fileList,
@@ -109,14 +108,16 @@ export default function FileUpload({setImage, setRes, setLoading}){
     };
   }
 
-  return <div>
-    <Radio.Group defaultValue="car" style = {{marginRight: "175px"}} onChange={switchMode}>
-      <Radio.Button value="car">Car</Radio.Button>
-      <Radio.Button value="people">People</Radio.Button>
-    </Radio.Group>
+  return <div >
+    
     
     <Upload {...uploadProps} action={`http://100.64.217.69:${port}/upload`} customRequest={customRequest} onSuccess={onSuccess}>       
         <Button icon={<UploadOutlined />}>Upload</Button>
       </Upload>   
+
+    <Radio.Group className="upload-select" defaultValue="people" onChange={switchMode}>
+      <Radio.Button value="people">People</Radio.Button>
+      <Radio.Button value="car">Car</Radio.Button>
+    </Radio.Group>
   </div>
 }

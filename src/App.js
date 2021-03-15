@@ -5,7 +5,7 @@ import "./App.css";
 import { useState } from "react";
 
 const mockData = [
-  { title: "车牌", result: "沪12345" },
+  { title: "车牌", result: ["1", "23"] },
   { title: "车型", result: "特斯拉M3" },
 ];
 

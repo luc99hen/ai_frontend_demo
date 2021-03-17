@@ -1,61 +1,71 @@
-import { Upload, Button, Radio } from 'antd';
-import { UploadOutlined } from '@ant-design/icons';
-import axios from 'axios';
+import { Upload, Button, Radio } from "antd";
+import { UploadOutlined } from "@ant-design/icons";
+import axios from "axios";
 import { useState } from "react";
 
-
-const fileList = [
+let defaultFileList = [
   {
-    uid: '-1',
-    name: 'xxx.png',
-    status: 'done',
-    url: 'https://zos.alipayobjects.com/rmsportal/jkjgkEfvpUPVyRjUImniVslZfWPnJuuZ.png',
-    thumbUrl: 'https://zos.alipayobjects.com/rmsportal/jkjgkEfvpUPVyRjUImniVslZfWPnJuuZ.png',
+    uid: "-1",
+    name: "xxx.png",
+    status: "done",
+    url:
+      "https://zos.alipayobjects.com/rmsportal/jkjgkEfvpUPVyRjUImniVslZfWPnJuuZ.png",
+    thumbUrl:
+      "https://zos.alipayobjects.com/rmsportal/jkjgkEfvpUPVyRjUImniVslZfWPnJuuZ.png",
+    category: "people",
   },
   {
-    uid: '-2',
-    name: 'yyy.png',
-    status: 'error',
+    uid: "-2",
+    name: "yyy.png",
+    status: "error",
+    category: "car",
   },
 ];
-
 
 const uploadProps = {
   multiple: false,
   listType: "picture",
-  defaultFileList: fileList,
   headers: {
-    Authorization: '$prefix $token',
+    Authorization: "$prefix $token",
   },
   onStart(file) {
-    console.log('onStart', file, file.name);
+    console.log("onStart", file, file.name);
   },
   onError(err) {
-    console.log('onError', err);
+    console.log("onError", err);
   },
   onProgress({ percent }, file) {
-    console.log('onProgress', `${percent}%`, file.name);
-  }
+    console.log("onProgress", `${percent}%`, file.name);
+  },
 };
 
-
-
-export default function FileUpload({setImage, setRes, setLoading}){
-
+export default function FileUpload({ setImage, setRes, setLoading }) {
   const [port, setURL] = useState("5000");
+  const [allFiles, setFiles] = useState(defaultFileList);
 
   const switchMode = (e) => {
     const mode = e.target.value;
-    if(mode === "car"){
+    if (mode === "car") {
       setURL("5001");
-    }
-    else{
+    } else {
       setURL("5000");
     }
   };
 
+  const onChange = ({ file, fileList }) => {
+    console.log(file);
+    if (!file.category) {
+      file.category = port === "5000" ? "people" : "car";
+      setFiles([...allFiles, file]);
+    }
+  };
+
+  const onRemove = (file) => {
+    setFiles(allFiles.filter((e) => e.uid !== file.uid));
+  };
+
   const onSuccess = (res, file) => {
-    console.log('onSuccess', res, file.name);
+    console.log("onSuccess", res, file.name);
     setRes(res.res);
   };
 
@@ -70,7 +80,6 @@ export default function FileUpload({setImage, setRes, setLoading}){
     onSuccess,
     withCredentials,
   }) => {
-
     const url = URL.createObjectURL(file);
     setImage(url);
 
@@ -78,7 +87,7 @@ export default function FileUpload({setImage, setRes, setLoading}){
 
     const formData = new FormData();
     if (data) {
-      Object.keys(data).forEach(key => {
+      Object.keys(data).forEach((key) => {
         formData.append(key, data[key]);
       });
     }
@@ -89,7 +98,10 @@ export default function FileUpload({setImage, setRes, setLoading}){
         withCredentials,
         headers,
         onUploadProgress: ({ total, loaded }) => {
-          onProgress({ percent: Math.round((loaded / total) * 100).toFixed(2) }, file);
+          onProgress(
+            { percent: Math.round((loaded / total) * 100).toFixed(2) },
+            file
+          );
         },
       })
       .then(({ data: response }) => {
@@ -99,25 +111,40 @@ export default function FileUpload({setImage, setRes, setLoading}){
       .catch(() => {
         onError();
         setLoading(false);
+        setRes([]);
       });
 
     return {
       abort() {
-        console.log('upload progress is aborted.');
+        console.log("upload progress is aborted.");
       },
     };
-  }
+  };
 
-  return <div >
-    
-    
-    <Upload {...uploadProps} action={`http://100.64.217.69:${port}/upload`} customRequest={customRequest} onSuccess={onSuccess}>       
+  return (
+    <div>
+      <Upload
+        {...uploadProps}
+        fileList={allFiles.filter(
+          (e) => e.category === (port === "5000" ? "people" : "car")
+        )}
+        action={`http://100.64.217.69:${port}/upload`}
+        customRequest={customRequest}
+        onSuccess={onSuccess}
+        onChange={onChange}
+        onRemove={onRemove}
+      >
         <Button icon={<UploadOutlined />}>Upload</Button>
-      </Upload>   
+      </Upload>
 
-    <Radio.Group className="upload-select" defaultValue="people" onChange={switchMode}>
-      <Radio.Button value="people">People</Radio.Button>
-      <Radio.Button value="car">Car</Radio.Button>
-    </Radio.Group>
-  </div>
+      <Radio.Group
+        className="upload-select"
+        defaultValue="people"
+        onChange={switchMode}
+      >
+        <Radio.Button value="people">People</Radio.Button>
+        <Radio.Button value="car">Car</Radio.Button>
+      </Radio.Group>
+    </div>
+  );
 }

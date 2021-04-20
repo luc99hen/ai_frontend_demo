@@ -9,10 +9,13 @@ export default function ResultCard({loading, resData, imgUrl}){
           src={imgUrl}
         />} loading={loading} >
 
-        {resData.map(v => (<div key={v.title}>
-          <span>{v.title}：</span>
-          <span>{v.result instanceof Array ? v.result.join(", ") : v.result} </span>
-        </div>))}
+        {resData.map(v =>
+          <div>{Object.keys(v).filter(key => (key!=="key" && key!=="name"))
+          .map(
+            (key) => (<span> {key}:&nbsp;{v[key]} &nbsp;&nbsp; </span> ))
+          }</div>
+        )
+        }
        
     </Card>;
 }

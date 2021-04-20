@@ -1,4 +1,4 @@
-import { Upload, Button, Radio } from "antd";
+import { Upload, Button } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
 import axios from "axios";
 import { useState } from "react";
@@ -12,22 +12,16 @@ let defaultFileList = [
       "https://zos.alipayobjects.com/rmsportal/jkjgkEfvpUPVyRjUImniVslZfWPnJuuZ.png",
     thumbUrl:
       "https://zos.alipayobjects.com/rmsportal/jkjgkEfvpUPVyRjUImniVslZfWPnJuuZ.png",
-    category: "people",
   },
   {
     uid: "-2",
     name: "yyy.png",
     status: "error",
-    category: "car",
   },
 ];
 
 const uploadProps = {
-  multiple: false,
   listType: "picture",
-  headers: {
-    Authorization: "$prefix $token",
-  },
   onStart(file) {
     console.log("onStart", file, file.name);
   },
@@ -39,24 +33,14 @@ const uploadProps = {
   },
 };
 
-export default function FileUpload({ setImage, setRes, setLoading }) {
-  const [port, setURL] = useState("5000");
+export default function FileUpload({ setImage, setRes, setLoading, path, loading }) {
   const [allFiles, setFiles] = useState(defaultFileList);
 
-  const switchMode = (e) => {
-    const mode = e.target.value;
-    if (mode === "car") {
-      setURL("5001");
-    } else {
-      setURL("5000");
-    }
-  };
 
   const onChange = ({ file, fileList }) => {
     console.log(file);
-    if (!file.category) {
-      file.category = port === "5000" ? "people" : "car";
-      setFiles([...allFiles, file]);
+    if(path === "file"){
+      setFiles(fileList);
     }
   };
 
@@ -69,7 +53,35 @@ export default function FileUpload({ setImage, setRes, setLoading }) {
     setRes(res.res);
   };
 
-  const customRequest = ({
+  const uploadFolder = ({action, file, headers, onProgress}) => {
+    
+    if(!loading){
+      setLoading(true);
+      console.log(file.webkitRelativePath);
+
+      const formData = new FormData();
+      formData.append("path", file.webkitRelativePath.split("/")[0])
+      axios
+      .post(action, formData,  {
+        headers,
+        onUploadProgress: ({ total, loaded }) => {
+          onProgress(
+            { percent: Math.round((loaded / total) * 100).toFixed(2) },
+            file
+          );
+        },
+      })
+      .then((res) => {
+        setRes(res.data.res);
+      })
+      .catch((err) => console.log(err))
+      .finally(() => setLoading(false))
+
+    }
+    
+  }
+
+  const uploadFile = ({
     action,
     data,
     file,
@@ -78,11 +90,9 @@ export default function FileUpload({ setImage, setRes, setLoading }) {
     onError,
     onProgress,
     onSuccess,
-    withCredentials,
   }) => {
     const url = URL.createObjectURL(file);
     setImage(url);
-
     setLoading(true);
 
     const formData = new FormData();
@@ -95,7 +105,6 @@ export default function FileUpload({ setImage, setRes, setLoading }) {
 
     axios
       .post(action, formData, {
-        withCredentials,
         headers,
         onUploadProgress: ({ total, loaded }) => {
           onProgress(
@@ -125,26 +134,16 @@ export default function FileUpload({ setImage, setRes, setLoading }) {
     <div>
       <Upload
         {...uploadProps}
-        fileList={allFiles.filter(
-          (e) => e.category === (port === "5000" ? "people" : "car")
-        )}
-        action={`http://100.64.217.69:${port}/upload`}
-        customRequest={customRequest}
+        directory={path === "folder"}
+        fileList={allFiles}
+        action={`http://localhost:5000/${path}`}
+        customRequest={path === "file" ? uploadFile : uploadFolder}
         onSuccess={onSuccess}
         onChange={onChange}
         onRemove={onRemove}
       >
-        <Button icon={<UploadOutlined />}>Upload</Button>
+        <Button icon={<UploadOutlined />}>上传</Button>
       </Upload>
-
-      <Radio.Group
-        className="upload-select"
-        defaultValue="people"
-        onChange={switchMode}
-      >
-        <Radio.Button value="people">People</Radio.Button>
-        <Radio.Button value="car">Car</Radio.Button>
-      </Radio.Group>
     </div>
   );
 }

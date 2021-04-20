@@ -1,21 +1,21 @@
 import FileUpload from "./FileUpload";
 import ResultCard from "./ResultCard";
+import ResultList from "./ResultList"
 import "antd/dist/antd.css";
 import "./App.css";
 import { useState } from "react";
+import {Radio} from "antd"
+import { FileImageOutlined, FolderOpenOutlined } from "@ant-design/icons";
 
-const mockData = [
-  { title: "车牌", result: ["1", "23"] },
-  { title: "车型", result: "特斯拉M3" },
-];
 
 function App() {
   const [imgUrl, setURL] = useState(
     "https://gw.alipayobjects.com/zos/rmsportal/JiqGstEfoWAOHiTxclqi.png"
   );
 
-  const [res, setRes] = useState(mockData);
+  const [res, setRes] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [path, setPath] = useState("file");
 
   const setImage = (url) => {
     setURL(url);
@@ -25,6 +25,11 @@ function App() {
     setRes(res);
   };
 
+  const switchMode = (e) => {
+    const mode = e.target.value;
+    setPath(mode);
+  };
+
   return (
     <div className="app">
       <div className="upload">
@@ -32,14 +37,28 @@ function App() {
           setImage={setImage}
           setRes={setPredict}
           setLoading={setLoading}
+          loading={loading}
+          path={path}
         ></FileUpload>
+        <Radio.Group
+          className="upload-select"
+          defaultValue="file"
+          onChange={switchMode}
+        >
+          <Radio.Button value="file"><FileImageOutlined />文件</Radio.Button>
+          <Radio.Button value="folder"><FolderOpenOutlined />文件夹</Radio.Button>
+        </Radio.Group>
       </div>
       <div className="result">
-        <ResultCard
-          loading={loading}
-          resData={res}
-          imgUrl={imgUrl}
-        ></ResultCard>
+        {path === "file" ?
+          <ResultCard
+            loading={loading}
+            resData={res}
+            imgUrl={imgUrl}
+          ></ResultCard> :
+          <ResultList loading={loading} resData={res}/>
+        }
+        
       </div>
     </div>
   );

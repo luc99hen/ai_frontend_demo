@@ -9,10 +9,11 @@ export default function ResultCard({loading, resData, imgUrl}){
           src={imgUrl}
         />} loading={loading} >
 
-        {resData.map(v => (<div key={v.title}>
-          <span>{v.title}：</span>
-          <span>{v.result instanceof Array ? v.result.join(", ") : v.result} </span>
-        </div>))}
+        {Array.isArray(resData) ? resData.map(v => (<div key={v.Plate}>
+          <span>车型：{v.Category}</span> &emsp;
+          <span>车牌: {v.Plate } </span> &emsp;
+          <span>品牌: {v.Brand } </span>
+        </div>)) : (<span>车轴数： {resData.axle}</span>) }
        
     </Card>;
 }

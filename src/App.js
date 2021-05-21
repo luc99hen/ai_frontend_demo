@@ -5,8 +5,7 @@ import "./App.css";
 import { useState } from "react";
 
 const mockData = [
-  { title: "车牌", result: ["1", "23"] },
-  { title: "车型", result: "特斯拉M3" },
+  { "Plate": "ABCDT", "Category": "大熊" },
 ];
 
 function App() {
@@ -18,6 +17,7 @@ function App() {
   const [loading, setLoading] = useState(false);
 
   const setImage = (url) => {
+    URL.revokeObjectURL(imgUrl);  // release previous URL file
     setURL(url);
   };
 

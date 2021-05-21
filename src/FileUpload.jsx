@@ -2,32 +2,11 @@ import { Upload, Button, Radio } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
 import axios from "axios";
 import { useState } from "react";
-
-let defaultFileList = [
-  {
-    uid: "-1",
-    name: "xxx.png",
-    status: "done",
-    url:
-      "https://zos.alipayobjects.com/rmsportal/jkjgkEfvpUPVyRjUImniVslZfWPnJuuZ.png",
-    thumbUrl:
-      "https://zos.alipayobjects.com/rmsportal/jkjgkEfvpUPVyRjUImniVslZfWPnJuuZ.png",
-    category: "people",
-  },
-  {
-    uid: "-2",
-    name: "yyy.png",
-    status: "error",
-    category: "car",
-  },
-];
+import {server_ip, defaultFileList} from "./config"
 
 const uploadProps = {
   multiple: false,
   listType: "picture",
-  headers: {
-    Authorization: "$prefix $token",
-  },
   onStart(file) {
     console.log("onStart", file, file.name);
   },
@@ -45,7 +24,7 @@ export default function FileUpload({ setImage, setRes, setLoading }) {
 
   const switchMode = (e) => {
     const mode = e.target.value;
-    if (mode === "car") {
+    if (mode === "axle") {
       setURL("5001");
     } else {
       setURL("5000");
@@ -55,7 +34,7 @@ export default function FileUpload({ setImage, setRes, setLoading }) {
   const onChange = ({ file, fileList }) => {
     console.log(file);
     if (!file.category) {
-      file.category = port === "5000" ? "people" : "car";
+      file.category = port === "5000" ? "type" : "axle";
       setFiles([...allFiles, file]);
     }
   };
@@ -81,6 +60,7 @@ export default function FileUpload({ setImage, setRes, setLoading }) {
     withCredentials,
   }) => {
     const url = URL.createObjectURL(file);
+    console.log(file);
     setImage(url);
 
     setLoading(true);
@@ -105,6 +85,18 @@ export default function FileUpload({ setImage, setRes, setLoading }) {
         },
       })
       .then(({ data: response }) => {
+        let GetImgHeader = new Headers();
+        GetImgHeader.append('pragma', 'no-cache');
+        GetImgHeader.append('cache-control', 'no-cache');
+
+        let header = {
+          method: 'GET',
+          headers: GetImgHeader,
+        };
+
+        fetch(`http://${server_ip}:${port}/getImg`, header)
+          .then(res => res.blob())
+          .then(img => setImage(URL.createObjectURL(img)))
         onSuccess(response, file);
         setLoading(false);
       })
@@ -126,9 +118,9 @@ export default function FileUpload({ setImage, setRes, setLoading }) {
       <Upload
         {...uploadProps}
         fileList={allFiles.filter(
-          (e) => e.category === (port === "5000" ? "people" : "car")
+          (e) => e.category === (port === "5000" ? "type" : "axle")
         )}
-        action={`http://100.64.217.69:${port}/upload`}
+        action={`http://${server_ip}:${port}/upload`}
         customRequest={customRequest}
         onSuccess={onSuccess}
         onChange={onChange}
@@ -139,11 +131,11 @@ export default function FileUpload({ setImage, setRes, setLoading }) {
 
       <Radio.Group
         className="upload-select"
-        defaultValue="people"
+        defaultValue="type"
         onChange={switchMode}
       >
-        <Radio.Button value="people">People</Radio.Button>
-        <Radio.Button value="car">Car</Radio.Button>
+        <Radio.Button value="type">Type</Radio.Button>
+        <Radio.Button value="axle">Axle</Radio.Button>
       </Radio.Group>
     </div>
   );

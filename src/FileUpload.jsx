@@ -21,7 +21,7 @@ let defaultFileList = [
 ];
 
 const uploadProps = {
-  listType: "picture",
+  // listType: "picture",
   onStart(file) {
     console.log("onStart", file, file.name);
   },
@@ -33,7 +33,7 @@ const uploadProps = {
   },
 };
 
-export default function FileUpload({ setImage, setRes, setLoading, path, loading }) {
+export default function FileUpload({ setImage, setRes, setLoading, path, loading, className }) {
   const [allFiles, setFiles] = useState(defaultFileList);
 
 
@@ -135,12 +135,13 @@ export default function FileUpload({ setImage, setRes, setLoading, path, loading
       <Upload
         {...uploadProps}
         directory={path === "folder"}
-        fileList={allFiles}
+        // fileList={allFiles}
         action={`http://localhost:5000/${path}`}
         customRequest={path === "file" ? uploadFile : uploadFolder}
         onSuccess={onSuccess}
         onChange={onChange}
         onRemove={onRemove}
+        className={className}
       >
         <Button icon={<UploadOutlined />}>上传</Button>
       </Upload>

@@ -5,24 +5,25 @@ function ResCard({res}){
     return <Card
         hoverable
         style={{ width: 240, margin: "10px" }}
-        cover={<img alt="example" src="https://os.alipayobjects.com/rmsportal/QBnOOoLaAfKPirc.png" />}
+        cover={<img alt="example" style={{height: 240}} src={res.url} />}
+        loading={!res.data}
     >
-        <Card.Meta title={res.category} description={`置信度：${res.confidence}`} />
+        { res.data ?  <Card.Meta title={`置信度：${res.data.confidence}`} /> : null}
   </Card>;
 }
 
-const mockData = [
-    {category: "白人", confidence: 0.99},
-    {category: "白人", confidence: 0.99},
-    {category: "白人", confidence: 0.99},
-    {category: "白人", confidence: 0.99},
-    {category: "白人", confidence: 0.99},
-    {category: "白人", confidence: 0.99},
-    {category: "白人", confidence: 0.99},
-    {category: "白人", confidence: 0.99},
-]
+// const mockData = [
+//     {category: "白人", confidence: 0.99},
+//     {category: "白人", confidence: 0.99},
+//     {category: "白人", confidence: 0.99},
+//     {category: "白人", confidence: 0.99},
+//     {category: "白人", confidence: 0.99},
+//     {category: "白人", confidence: 0.99},
+//     {category: "白人", confidence: 0.99},
+//     {category: "白人", confidence: 0.99},
+// ]
 
-export default function ResultGallary(){
+export default function ResultGallary({allRes}){
 
     const [value, setValue] = useState(1);
 
@@ -42,7 +43,7 @@ export default function ResultGallary(){
             <Radio value={8}>其他</Radio>
         </Radio.Group>
         <div className="res-gallary">
-            {mockData.map((res, i) =>
+            {allRes.map((res, i) =>
                 (<ResCard res={res} key={i}></ResCard>)
             )}
         </div>

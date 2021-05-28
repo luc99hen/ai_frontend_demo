@@ -1,147 +1,106 @@
 import { Upload, Button } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
 import axios from "axios";
-import { useState } from "react";
+// import { useState, useEffect } from "react";
 
-let defaultFileList = [
-  {
-    uid: "-1",
-    name: "xxx.png",
-    status: "done",
-    url:
-      "https://zos.alipayobjects.com/rmsportal/jkjgkEfvpUPVyRjUImniVslZfWPnJuuZ.png",
-    thumbUrl:
-      "https://zos.alipayobjects.com/rmsportal/jkjgkEfvpUPVyRjUImniVslZfWPnJuuZ.png",
-  },
-  {
-    uid: "-2",
-    name: "yyy.png",
-    status: "error",
-  },
-];
+const ip = "100.64.210.94:5000";
+const url = `http://${ip}/uploadFiles`;
 
-const uploadProps = {
-  // listType: "picture",
-  onStart(file) {
-    console.log("onStart", file, file.name);
-  },
-  onError(err) {
-    console.log("onError", err);
-  },
-  onProgress({ percent }, file) {
-    console.log("onProgress", `${percent}%`, file.name);
-  },
+let controlParas = {
+  lastIndex: 0, 
+  uploadLimit: 1,
+  cacheList: [],
+  totalPics: 0
 };
 
-export default function FileUpload({ setImage, setRes, setLoading, path, loading, className }) {
-  const [allFiles, setFiles] = useState(defaultFileList);
-
+export default function FileUpload({releasePics, appendPic, setRes, setLoading }) {
 
   const onChange = ({ file, fileList }) => {
-    console.log(file);
-    if(path === "file"){
-      setFiles(fileList);
+    // release picture blob hold by URL.createObjectURL
+    releasePics();
+    // reset control paras
+    controlParas = {
+      lastIndex: 0, 
+      uploadLimit: 1,
+      cacheList: [],
+      totalPics: fileList.length
     }
+    fileList.length = 0;  // hack: because fileList is accumulated
   };
 
-  const onRemove = (file) => {
-    setFiles(allFiles.filter((e) => e.uid !== file.uid));
-  };
-
-  const onSuccess = (res, file) => {
-    console.log("onSuccess", res, file.name);
-    setRes(res.res);
-  };
-
-  const uploadFolder = ({action, file, headers, onProgress}) => {
-    
-    if(!loading){
-      setLoading(true);
-      console.log(file.webkitRelativePath);
-
-      const formData = new FormData();
-      formData.append("path", file.webkitRelativePath.split("/")[0])
-      axios
-      .post(action, formData,  {
-        headers,
-        onUploadProgress: ({ total, loaded }) => {
-          onProgress(
-            { percent: Math.round((loaded / total) * 100).toFixed(2) },
-            file
-          );
-        },
-      })
-      .then((res) => {
-        setRes(res.data.res);
-      })
-      .catch((err) => console.log(err))
-      .finally(() => setLoading(false))
-
-    }
-    
+  const onStart = (file)=> {
+    // console.log("onStart", file, file.name);
+  }
+  const onError = (err) => {
+    console.log("onError", err);
   }
 
-  const uploadFile = ({
-    action,
-    data,
-    file,
-    filename,
-    headers,
-    onError,
-    onProgress,
-    onSuccess,
-  }) => {
-    const url = URL.createObjectURL(file);
-    setImage(url);
-    setLoading(true);
+  const onSuccess = () => {
+    sendRequst();
+  };
+
+
+  const sendRequst = () => {
+    const {uploadLimit, lastIndex, cacheList, totalPics} = controlParas;
+    console.log(cacheList.length, uploadLimit, totalPics, lastIndex);
+    if(cacheList.length === 0) {
+      console.log("cache empty");
+      return
+    }
+    else if(cacheList.length < (totalPics - lastIndex)) {
+      console.log("wait for sending", cacheList);
+      return;
+    } 
+
+   
+    console.log("start sending", cacheList);
+    
+    // setLoading(true);
 
     const formData = new FormData();
-    if (data) {
-      Object.keys(data).forEach((key) => {
-        formData.append(key, data[key]);
-      });
-    }
-    formData.append(filename, file);
+    const start = lastIndex, end = lastIndex+ Math.min(uploadLimit, cacheList.length)  -1;
+    formData.append("start", start.toString());
+    formData.append("end", end.toString());
+    cacheList.splice(0, end-start+1).forEach((file, index) => {
+      formData.append((lastIndex + index).toString(), file);
+    })
 
     axios
-      .post(action, formData, {
-        headers,
-        onUploadProgress: ({ total, loaded }) => {
-          onProgress(
-            { percent: Math.round((loaded / total) * 100).toFixed(2) },
-            file
-          );
-        },
+      .post(url, formData)
+      .then((res) => {
+        console.log("SUCCESS", res);
+        setRes(res.data.res);
+        controlParas.lastIndex = end+1;
+        controlParas.uploadLimit = uploadLimit*2;
+        if(cacheList.length > 0){
+          console.log("next request");
+          sendRequst();
+        }
       })
-      .then(({ data: response }) => {
-        onSuccess(response, file);
-        setLoading(false);
+      .catch((err) => {
+        onError(err);
       })
-      .catch(() => {
-        onError();
-        setLoading(false);
-        setRes([]);
-      });
+      .finally();
+  }
 
-    return {
-      abort() {
-        console.log("upload progress is aborted.");
-      },
-    };
+
+  const uploadFile = ({ file, onSuccess }) => {
+    const img_url = URL.createObjectURL(file);
+    appendPic(img_url);
+    controlParas.cacheList.push(file);
+    onSuccess();
   };
 
   return (
     <div>
       <Upload
-        {...uploadProps}
-        directory={path === "folder"}
-        // fileList={allFiles}
-        action={`http://localhost:5000/${path}`}
-        customRequest={path === "file" ? uploadFile : uploadFolder}
+        showUploadList={false}
+        directory
+        customRequest={uploadFile}
+        onStart={onStart}
         onSuccess={onSuccess}
         onChange={onChange}
-        onRemove={onRemove}
-        className={className}
+        className="upload-select"
       >
         <Button icon={<UploadOutlined />}>上传</Button>
       </Upload>

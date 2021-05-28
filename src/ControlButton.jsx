@@ -1,10 +1,7 @@
 import {Button} from "antd";
 
-export default function ControlButton({icon, onClick, props}){
+export default function ControlButton({ onClick, children}){
     return <Button 
-        {...props}
         onClick={onClick}
-        style={{"margin": "auto 20px"}} 
-        shape="circle" size="large" 
-        icon={icon}></Button>;
+        size="large" >{children}</Button>;
 } 

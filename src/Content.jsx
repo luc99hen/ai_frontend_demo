@@ -1,12 +1,11 @@
 import Image from "./Image";
 import ControlButton from "./ControlButton";
-import FileUpload from "./FileUpload"
+import UploadPage from "./UploadPage"
 import ResultCard from "./ResultCard"
 import ResultGallary from "./ResultGallary"
-import {useForceUpdate} from "./utils"
+import {useForceUpdate, useInterval} from "./utils"
 import { Button } from 'antd';
 import { useState } from "react";
-import { PauseOutlined,CaretRightOutlined,RadarChartOutlined,FastForwardOutlined,ShrinkOutlined } from "@ant-design/icons";
 
 
 import p1 from "./images/1.jpg"
@@ -17,43 +16,63 @@ let res = {
     race: "东亚人",
     confidence: 0.99
 }
+let res1 = {
+    id: 1,
+    type: "东亚人",
+    race: "非人",
+    confidence: 0.99
+}
 const multiple_src = [{"url": p1, "data": res}, {"url": p2, "data": res}, 
-    {"url": "https://gw.alipayobjects.com/zos/rmsportal/JiqGstEfoWAOHiTxclqi.png", "data": res}
+    {"url": "https://gw.alipayobjects.com/zos/rmsportal/JiqGstEfoWAOHiTxclqi.png", "data": res1}
 ] 
 
-let timer = null, next_src = 0;
-
+let next_src = 0;
+// const all_status = ["upload", "show-single", "show-multiple"];
 
 export default function Content(){
     const [detect_mode, setDetect] = useState(false);
-    const [show_mode, setShow] = useState("single");   // show_mode: can be single picture or multiple picture
-    const [show_all, setShowAll] = useState(false);
+    const [show_mode, setShow] = useState("single");     // show_mode: can be single picture or multiple picture
+    const [page_status, setPage] = useState(1);
     const [cur_img, setImg] = useState(multiple_src[0]);
     const [all_pics, setPics] = useState(multiple_src);
     const forceUpdate = useForceUpdate();
 
 
     const nextPic = () => {   
-        setImg(all_pics[next_src]);
+        const next_img = all_pics[next_src];
+        setImg(next_img);
+        if (detect_mode && show_mode === "multiple"
+            && next_img.data
+            && next_img.data.race !== "东亚人") {
+            console.log("bad guy found");
+            stopPlay();
+        }
         next_src = (next_src + 1) % all_pics.length;
+    }
+
+    useInterval(nextPic, show_mode === "multiple" ? 1000 : null);
+
+    const startNext = () => {
+        setShow("single");
+        nextPic();
     }
 
     const startPlay = () => {
         setShow("multiple");
-        if(!timer){
-            timer = setInterval(nextPic, 1000); 
-        }
+        setDetect(false);
     }
 
     const stopPlay = () => {
         setShow("single");
-        clearInterval(timer);
-        timer = null;
+    }
+
+    const startDetect = () => {
+        setShow("multiple");
+        setDetect(true);
     }
 
     const appendPic = (newPic) => {
         setPics((arr) => [...arr, {"url": newPic, "data": null}]);
-        next_src = 0;
     }
 
     const releasePics = () => {
@@ -61,6 +80,7 @@ export default function Content(){
             all_pics.forEach(img => {URL.revokeObjectURL(img.url)})
         }
         setPics([]);
+        next_src = 0;
     }
 
     const setRes = (res) => {
@@ -73,48 +93,63 @@ export default function Content(){
         forceUpdate();
     }
 
-    if(timer && show_mode === "single"){
-        clearInterval(timer);
+    const lastPage = () => {
+        if(page_status === 2) {
+            const ele = document.getElementById("root");   
+            ele.style.height = "100%";
+        } else {
+
+        }
+        setPage(page_status => page_status-1);
     }
+
+    const nextPage = () => {
+        if(page_status === 1){  
+            const ele = document.getElementById("root");    
+            ele.style.height = "auto";
+        }else {
+            nextPic();
+        }
+        setPage(page_status => page_status+1);
+    }
+
 
     const all_res = <div>
         <ResultGallary allRes={all_pics}></ResultGallary>
-        <Button size="large" className="close-btn" icon={<ShrinkOutlined />} onClick={ () => {
-            setShowAll(false);
-            const ele = document.getElementById("root");    
-            ele.style.height = "100%";
-        } }></Button>
     </div>;
 
     const single_res = <div>   
         <Image src={cur_img.url}></Image>
         <div className="button-group">
-            {show_mode === "multiple" ? <ControlButton icon={<PauseOutlined />} onClick={stopPlay}/> 
-                : <ControlButton icon={<CaretRightOutlined />} onClick={nextPic}/> }           
-            <ControlButton icon={<FastForwardOutlined />} onClick={startPlay} />
-            
-            <ControlButton icon={<RadarChartOutlined />} 
-                onClick = {() => {setDetect(!detect_mode)}} 
-                props={{"danger": detect_mode, "type": "text"}} />
+            <ControlButton onClick={startNext}>单步展示模式</ControlButton>
+            <ControlButton onClick={startPlay}>连续展示模式</ControlButton>
+            <ControlButton onClick={startDetect}>外国人发现模式</ControlButton>
+            <ControlButton onClick={nextPage}>全部识别结果分类概览</ControlButton>
         </div>
 
         <ResultCard result={cur_img.data} />
-        <Button className="show-all-btn" onClick={() => { 
-            setShowAll(true);
-            const ele = document.getElementById("root");    
-            ele.style.height = "auto";
-        } }>展示所有结果</Button>
+        
     </div>;
-    
 
-    return <div>
-        {show_all ? all_res : single_res}
-        <FileUpload 
-            // setLoading={setLoading} 
+    const upload_page = <div>
+        <UploadPage
             appendPic={appendPic}
             releasePics={releasePics}
             setRes={setRes}
-            >
-        </FileUpload>
+            nextStage={nextPage}>
+        </UploadPage></div>
+    
+
+    return <div>
+        {
+            page_status === 2 ? all_res : 
+                page_status === 1 ? single_res : upload_page
+        }
+        {
+            page_status !== 0 ? <Button 
+                className="return-btn"
+                onClick={lastPage}
+            >返回</Button> : null
+        }
     </div>
 }

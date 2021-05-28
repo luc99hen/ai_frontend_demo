@@ -13,14 +13,24 @@
   width: 30%;
 }
 
-.upload-select {
+/* .upload-status {
   position: absolute;
-  right: 165px;
   bottom: 60px;
+} */
+
+.return-btn {
+  position: absolute;
+  right: 50px;
+  bottom: 30px;
 }
 
-#root, .layout {
+#root {
   height: 100%;
+}
+
+.layout {
+  height: 100%;
+  min-height: 100vh;
 }
 
 .upload-image {
@@ -28,7 +38,7 @@
   left: 10%;
   top: 13%;
   width: 40%;
-  height: 60%;
+  height: 68%;
   background-color: white;
   text-align: center;
   overflow: hidden;
@@ -37,28 +47,29 @@
 .upload-res {
   position: absolute;
   right: 15%;
-  top: 20%;
+  top: 30%;
   width: 20%;
+  object-fit: cover;
+}
+
+.ant-card-head-title {
+  font-size: 46px;
+  font-weight: 800;
 }
 
 .show-all-btn {
-  position: absolute;
-  right: 50px;
+  position: absolute !important;
+  right: 165px;
   bottom: 60px;
 }
 
-.close-btn {
-  position: fixed;
-  right: 8%;
-  bottom: 10%;
-}
 
 .button-group {
   position: absolute;
-  justify-content: center;
+  justify-content: space-evenly;
   left: 10%;
-  top: 75%;
-  width: 40%;
+  top: 88%;
+  width: 80%;
   display: flex;
 }
 
@@ -104,4 +115,13 @@
 .res-wrapper {
   background: white;
   padding: 3% 5%;
+}
+
+.ant-btn-lg {
+  height: 60px;
+  padding: 6.4px 15px;
+  font-size: 25px;
+  border-radius: 2px;
+  border: solid;
+  font-weight: 700;
 }

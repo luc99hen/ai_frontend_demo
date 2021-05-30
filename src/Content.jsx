@@ -1,14 +1,14 @@
 import Image from "./Image";
 import ControlButton from "./ControlButton";
-import UploadPage from "./UploadPage"
+import {UploadPage, controlParas as uploadControlParas} from "./UploadPage"
 import ResultCard from "./ResultCard"
 import ResultGallary from "./ResultGallary"
 import {useForceUpdate, useInterval} from "./utils"
-import { Button } from 'antd';
+import { Button, notification  } from 'antd';
 import { useState } from "react";
 
 
-import p1 from "./images/1.jpg"
+import p1 from "./images/3.jpg"
 import p2 from "./images/2.jpg"
 let res = {
     id: 1,
@@ -32,14 +32,15 @@ let next_src = 0;
 export default function Content(){
     const [detect_mode, setDetect] = useState(false);
     const [show_mode, setShow] = useState("single");     // show_mode: can be single picture or multiple picture
-    const [page_status, setPage] = useState(1);
+    const [page_status, setPage] = useState(0);
     const [cur_img, setImg] = useState(multiple_src[0]);
     const [all_pics, setPics] = useState(multiple_src);
     const forceUpdate = useForceUpdate();
 
-
-    const nextPic = () => {   
-        const next_img = all_pics[next_src];
+    
+    const nextPic = () => {         
+        const show_pics = all_pics.filter(r => r.data && r.data.race !== null);
+        const next_img = show_pics[next_src];
         setImg(next_img);
         if (detect_mode && show_mode === "multiple"
             && next_img.data
@@ -47,10 +48,16 @@ export default function Content(){
             console.log("bad guy found");
             stopPlay();
         }
-        next_src = (next_src + 1) % all_pics.length;
+        next_src = (next_src + 1) % show_pics.length;
+        if(next_src === 0) {
+            notification.open({
+                message: '已是最后一张',
+            })
+            stopPlay();
+        }
     }
 
-    useInterval(nextPic, show_mode === "multiple" ? 1000 : null);
+    useInterval(nextPic, show_mode === "multiple" ? 100 : null);
 
     const startNext = () => {
         setShow("single");
@@ -98,7 +105,8 @@ export default function Content(){
             const ele = document.getElementById("root");   
             ele.style.height = "100%";
         } else {
-
+            uploadControlParas.lastIndex = 0;
+            uploadControlParas.totalPics = 0;
         }
         setPage(page_status => page_status-1);
     }

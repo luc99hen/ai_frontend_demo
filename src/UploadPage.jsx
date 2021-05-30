@@ -6,17 +6,18 @@ import { useState } from "react";
 import {float2percent, useForceUpdate} from "./utils"
 
 
-const ip = "100.64.210.94:5000";
-const url = `http://${ip}/uploadFiles`;
+const ip = process.env.NODE_ENV === "production" ? 
+  window.location.hostname : "100.64.210.94";
+const url = `http://${ip}:5000/uploadFiles`;
 
 let cacheList = [];
-let controlParas = {
+export let controlParas = {
   lastIndex: 0, 
   uploadLimit: 2,
   totalPics: 0
 }
 
-export default function UploadPage({releasePics, appendPic, setRes, nextStage }) {
+export function UploadPage({releasePics, appendPic, setRes, nextStage }) {
   const forceUpdate = useForceUpdate();
   const [uploadEnable, setEnable] = useState(true);
 

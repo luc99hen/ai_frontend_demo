@@ -1,17 +1,19 @@
 import {Radio, Card, Empty } from "antd"
 import { useState } from "react";
+import {float2percent} from "./utils"
 
 function ResCard({res}){
     return <Card
         hoverable
         style={{ width: 240, margin: "10px" }}
         cover={<img alt="example" style={{height: 240, objectFit: "cover"}} src={res.url} />}
-        loading={!res.data}
     >
         { res.data ?  (
             <div>
-                <Card.Meta title={`人种分类：${res.data.race}`} />
-                <Card.Meta title={`置信度：${res.data.confidence}`} />
+                <Card.Meta title={res.data.race !== null ? `人种分类：${res.data.race}` : "人种分类：无"} />
+                {   res.data.race === null ? null :
+                        <Card.Meta title={`置信度：${float2percent(res.data.confidence, 2) }%` } />
+                }
             </div>
             ) : null}
   </Card>;
@@ -29,7 +31,7 @@ export default function ResultGallary({allRes}){
         if(value === "全部结果")
             return true;
         else if(value === "其他")
-            return !r.data;
+            return r.data && r.data.race === null;
         else
             return r.data && r.data.race === value;
     }
@@ -43,8 +45,7 @@ export default function ResultGallary({allRes}){
             <Radio value={"黑人"}>黑人</Radio>
             <Radio value={"拉美裔"}>拉美裔</Radio>
             <Radio value={"东亚人"}>东亚人</Radio>
-            <Radio value={"印度人"}>印度人</Radio>
-            <Radio value={"中东人"}>中东人</Radio>         
+            <Radio value={"西亚人"}>西亚人</Radio>
             <Radio value={"其他"}>其他</Radio>
         </Radio.Group>
         <div className="res-gallary">
